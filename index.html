@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- 针对iPhone的初始视口配置，禁止用户缩放以获得类似原生App的体验 -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>山羊 GOAT - 主页面</title>
+  <style>
+    /* =============== 全局基础样式 =============== */
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+
+    /* 头部 */
+    .header {
+      background-color: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 内容区和底部导航的布局 */
+    .main {
+      flex: 1; 
+      overflow-y: auto; /* 内容区可滚动 */
+      padding: 10px;
+      /* 让底部导航不会覆盖内容 */
+      margin-bottom: 58px; 
+    }
+
+    /* =============== 底部导航条 =============== */
+    .tab-bar {
+      position: fixed; /* 固定定位 */
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      display: flex;
+      border-top: 1px solid #ddd;
+      background-color: #fff;
+      z-index: 999; /* 确保在最上层 */
+    }
+    .tab-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+      font-size: 12px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .tab-item.active {
+      color: #5690d8; 
+      font-weight: 600;
+    }
+    .tab-item i {
+      font-size: 18px;
+      margin-bottom: 2px;
+    }
+
+    /* =============== 各个Tab对应的内容容器 =============== */
+    .tab-content {
+      display: none; /* 默认隐藏，激活时显示 */
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* ============ 个人中心Tab ============ */
+    /* 1) 好友列表 & 个人信息视图 */
+    #friend-list-container {
+      /* 默认显示 */
+    }
+    /* 2) 聊天视图 */
+    #chat-container {
+      display: none; /* 切换后显示 */
+      height: calc(100vh - 58px - 60px); /* 预留头部和底部导航的高度，根据需要可微调 */
+    }
+
+    /* 个人资料卡 */
+    .profile-container {
+      text-align: center;
+    }
+    .profile-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      display: inline-block;
+      text-align: left;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 20px;
+    }
+    .profile-avatar {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background-color: #ddd;
+      display: block;
+      object-fit: cover; /* 如果后续需要展示真实头像，可用此属性 */
+    }
+    .profile-info {
+      margin-top: 15px;
+    }
+    .profile-info h2 {
+      margin: 10px 0;
+      font-size: 20px;
+      color: #333;
+    }
+    .profile-info p {
+      margin: 5px 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .stats-container {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 20px;
+    }
+    .stat h3 {
+      margin: 0;
+      font-size: 20px;
+      color: #f04e30;
+    }
+    .stat p {
+      margin: 5px 0 0;
+      font-size: 14px;
+      color: #666;
+    }
+    .btn-edit {
+      background-color: #f04e30;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .btn-edit:hover {
+      background-color: #d13e27;
+    }
+    .btn-logout {
+      background-color: #bbb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 20px;
+      font-size: 14px;
+      cursor: pointer;
+      margin: 0 0 20px 0; /* 示例: 给底部留点间距 */
+    }
+    .btn-logout:hover {
+      background-color: #999;
+    }
+
+    /* 好友列表 */
+    .friend-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .friend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #fff;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+    }
+    .friend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+    .friend-item button {
+      background-color: #5690d8;
+      color: #fff;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 5px;
+    }
+    .friend-item button:hover {
+      background-color: #4577b5;
+    }
+
+    /* 过往分享 */
+    .share-container {
+      margin-top: 20px;
+      text-align: left;
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    .share {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .share-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .share-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .share-date {
+      font-size: 12px;
+      color: #999;
+    }
+    .share-content {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+    .share-video {
+      margin-top: 10px;
+      width: 100%;
+      max-width: 360px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ============ 聊天界面 ============ */
+    .chat-header {
+      background: #f0f0f0;
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    .back-btn {
+      font-size: 18px;
+      color: #5690d8;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .chat-title {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+      background: #fafafa;
+      height: calc(100% - 100px); /* 预留顶部和底部输入框的空间 */
+    }
+    .chat-input {
+      display: flex;
+      padding: 10px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-right: 5px;
+      font-size: 14px;
+    }
+    .chat-input button {
+      background: #5690d8;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .chat-input button:hover {
+      background: #4577b5;
+    }
+    .chat-bubble {
+      display: inline-block;
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 18px;
+      max-width: 70%;
+      line-height: 1.4;
+      font-size: 14px;
+      position: relative;
+      clear: both;
+      word-wrap: break-word;
+    }
+    .me {
+      float: right;
+      background-color: #cce5ff;
+      color: #333;
+      margin-right: 10px;
+    }
+    .me::after {
+      content: "";
+      position: absolute;
+      right: -6px;
+      top: 12px;
+      border-width: 6px 0 6px 6px;
+      border-style: solid;
+      border-color: transparent transparent transparent #cce5ff;
+    }
+    .friend {
+      float: left;
+      background-color: #fff;
+      color: #333;
+      border: 1px solid #ddd;
+      margin-left: 10px;
+    }
+    .friend::before {
+      content: "";
+      position: absolute;
+      left: -6px;
+      top: 12px;
+      border-width: 6px 6px 6px 0;
+      border-style: solid;
+      border-color: transparent #fff transparent transparent;
+    }
+
+    /* ============ 线路分享Tab、野攀社区Tab、学习交流Tab 的CSS类似 ============ */
+    .search-bar {
+      margin: 10px 0;
+      display: flex;
+      justify-content: center;
+    }
+    .search-bar input {
+      width: 80%;
+      max-width: 400px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+    .community-container {
+      padding: 10px 0;
+    }
+    .post {
+      background: white;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .post-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .post-title:hover {
+      color: #f04e30;
+    }
+    .post-date {
+      font-size: 12px;
+      color: #999;
+    }
+    .post-content {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    .post-actions {
+      display: flex;
+      align-items: center;
+    }
+    .btn-like {
+      background-color: transparent;
+      border: none;
+      color: #f04e30;
+      cursor: pointer;
+      margin-right: 6px;
+    }
+    .btn-like:hover {
+      color: #d13e27;
+    }
+    .like-count {
+      margin-right: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    /* ============ 编辑资料弹窗 ============ */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 2000;
+      display: none; /* 默认不显示 */
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content h3 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      font-size: 18px;
+      text-align: center;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    .btn-modal {
+      margin-top: 10px;
+      padding: 8px 12px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-save {
+      background-color: #5690d8;
+      color: #fff;
+      margin-right: 10px;
+    }
+    .btn-cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+    .btn-save:hover {
+      background-color: #4577b5;
+    }
+    .btn-cancel:hover {
+      background-color: #bbb;
+    }
+    .error-message {
+      color: red;
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    /* ============ 好友资料弹窗 ============ */
+    #friend-info-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 3000;
+      display: none; /* 默认不显示 */
+      justify-content: center;
+      align-items: center;
+    }
+    #friend-info-content {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+    .friend-info-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      margin: 0 auto;
+      background-color: #ddd;
+      display: block;
+      object-fit: cover;
+    }
+    #friend-info-content h4 {
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+    #friend-info-content p {
+      margin: 5px 0;
+      color: #333;
+      font-size: 14px;
+    }
+    .btn-close {
+      background-color: #aaa;
+      color: #fff;
+      margin-top: 15px;
+    }
+    .btn-close:hover {
+      background-color: #888;
+    }
+
+    /* ============ “加好友”搜索框 ============ */
+    .add-friend-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .add-friend-container input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      margin-right: 5px;
+      font-size: 14px;
+    }
+    .add-friend-container button {
+      background-color: #f04e30;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .add-friend-container button:hover {
+      background-color: #d13e27;
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部 -->
+  <div class="header">山羊 GOAT</div>
+
+  <!-- 主内容区 -->
+  <div class="main">
+    <!-- 个人中心Tab (默认激活) -->
+    <div class="tab-content active" id="tab-personal">
+      <!-- 好友列表及个人资料 -->
+      <div id="friend-list-container">
+        <h2>个人中心</h2>
+        <!-- “退出登录”按钮 -->
+        <button class="btn-logout" onclick="logout()">退出登录</button>
+        <!-- 个人资料卡 -->
+        <div class="profile-container">
+          <div class="profile-card">
+            <!-- 用户头像 -->
+            <img class="profile-avatar" id="profile-avatar" alt="Avatar">
+
+            <div class="profile-info">
+                <h2 id="profile-username">用户名</h2>
+                <p id="profile-gender">性别: 女</p>
+                <p id="profile-height">身高(cm): 170</p>
+                <p id="profile-wingspan">臂展(cm): 165</p>
+                <p id="profile-level">难度水平: 5.10a</p>
+                <p id="profile-time">攀岩时长: 半年</p>
+                <p id="profile-prefer">攀岩偏好: 绳索攀岩</p>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat">
+                    <h3 id="profile-days">120</h3>
+                    <p>注册天数</p>
+                </div>
+                <div class="stat">
+                    <h3 id="profile-beta">15</h3>
+                    <p>分享Beta</p>
+                </div>
+            </div>
+            <button class="btn-edit" onclick="openEditProfile()">编辑个人资料</button>
+          </div>
+        </div>
+
+        <h3>我的好友</h3>
+        <!-- 加好友功能 -->
+        <div class="add-friend-container">
+          <input type="text" id="search-friend-input" placeholder="输入用户名">
+          <button onclick="requestAddFriend()">加好友</button>
+        </div>
+        <!-- 好友列表 -->
+        <ul class="friend-list" id="friend-list">
+          <!-- 初始好友示例 -->
+          <li class="friend-item" onclick="openFriendInfo(event, '用户1')">
+            <div style="display: flex; align-items: center;">
+              <img src="img/avatar1.png" alt="">
+              <span>用户1</span>
+            </div>
+            <div>
+              <button onclick="enterChat(event, '用户1')">聊天</button>
+              <button onclick="deleteFriend(event, '用户1')">删除</button>
+            </div>
+          </li>
+          <li class="friend-item" onclick="openFriendInfo(event, '用户2')">
+            <div style="display: flex; align-items: center;">
+              <img src="img/avatar2.png" alt="">
+              <span>用户2</span>
+            </div>
+            <div>
+              <button onclick="enterChat(event, '用户2')">聊天</button>
+              <button onclick="deleteFriend(event, '用户2')">删除</button>
+            </div>
+          </li>
+        </ul>
+
+        <!-- 过往分享示例 -->
+        <div class="share-container">
+          <h3>过往分享</h3>
+          <div class="share">
+              <div class="share-header">
+                  <div class="share-title">北京zz岩馆</div>
+                  <div class="share-date">分享日期: 2025-01-01</div>
+              </div>
+              <div class="share-content">v3的beta分享</div>
+              <video class="share-video" controls>
+                  <source src="example-video1.mp4" type="video/mp4">
+                  您的浏览器不支持视频播放。
+              </video>
+          </div>
+          <div class="share">
+              <div class="share-header">
+                  <div class="share-title">北京aa岩馆</div>
+                  <div class="share-date">分享日期: 2025-01-08</div>
+              </div>
+              <div class="share-content">蓝色5.10beta分享</div>
+              <video class="share-video" controls>
+                  <source src="example-video2.mp4" type="video/mp4">
+                  您的浏览器不支持视频播放。
+              </video>
+          </div>
+        </div>
+      </div>
+
+      <!-- 聊天界面（默认隐藏） -->
+      <div id="chat-container">
+        <div class="chat-header">
+          <button class="back-btn" onclick="returnToFriendList()">←</button>
+          <span class="chat-title" id="chat-title">与 ??? 的聊天</span>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input">
+          <input type="text" id="chat-input" placeholder="输入消息...">
+          <button onclick="sendMessage()">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 线路分享Tab -->
+    <div class="tab-content" id="tab-share">
+      <h2>线路分享</h2>
+      <!-- 城市选择下拉框 -->
+      <div class="search-bar">
+        <label for="city-select">选择城市：</label>
+        <select id="city-select"></select>
+      </div>
+  
+      <div class="search-bar">
+        <input type="text" id="search-input" placeholder="搜索岩馆..." />
+      </div>
+  
+      <div class="community-container" id="share-list">
+        <!-- 动态渲染 -->
+      </div>
+    </div>
+
+    <!-- 野攀社区Tab -->
+    <div class="tab-content" id="tab-community">
+      <h2>野攀社区</h2>
+      <div class="search-bar">
+        <input type="text" id="search-input-community" placeholder="搜索帖子...">
+      </div>
+      <!-- 用一个按钮跳转到发帖页面 -->
+      <div style="margin: 10px 0;">
+        <button onclick="goToCommunityPostPage()">去发帖</button>
+      </div>
+
+      <!-- 新增：帖子列表容器 -->
+      <div id="community-post-list"></div>
+    </div>
+
+    <!-- 学习交流Tab -->
+    <div class="tab-content" id="tab-study">
+      <h2>学习交流</h2>
+      <div class="search-bar">
+        <input type="text" id="search-input-study" placeholder="搜索帖子...">
+      </div>
+      
+      <!-- 用一个按钮跳转到发帖页面 -->
+      <div style="margin: 10px 0;">
+        <button onclick="goToStudyPostPage()">去发帖</button>
+      </div>
+
+      <!-- 新增：帖子列表容器 -->
+      <div id="study-post-list"></div>
+    </div>
+
+  <!-- 底部导航 -->
+  <div class="tab-bar" id="tab-bar">
+    <div class="tab-item active" data-target="tab-personal">
+      <i>👤</i>
+      <span>个人中心</span>
+    </div>
+    <div class="tab-item" data-target="tab-share">
+      <i>📍</i>
+      <span>线路分享</span>
+    </div>
+    <div class="tab-item" data-target="tab-community">
+      <i>🌄</i>
+      <span>野攀社区</span>
+    </div>
+    <div class="tab-item" data-target="tab-study">
+      <i>📚</i>
+      <span>学习交流</span>
+    </div>
+  </div>
+
+  <!-- ============== 编辑资料弹窗 ============== -->
+  <div class="modal-overlay" id="edit-profile-overlay">
+    <div class="modal-content">
+      <h3>编辑个人资料</h3>
+      <div class="form-group">
+        <label for="edit-username">用户名</label>
+        <input type="text" id="edit-username" />
+        <p class="error-message" id="error-username"></p>
+      </div>
+      <div class="form-group">
+        <label for="edit-avatar">头像</label>
+        <input type="file" id="edit-avatar" />
+      </div>
+      <div class="form-group">
+        <label for="edit-gender">性别</label>
+        <select id="edit-gender">
+          <option value="女">女</option>
+          <option value="男">男</option>
+          <option value="不想透露">不想透露</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-height">身高(cm)</label>
+        <input type="number" id="edit-height" min="0" max="300"/>
+      </div>
+      <div class="form-group">
+        <label for="edit-wingspan">臂展(cm)</label>
+        <input type="number" id="edit-wingspan" min="0" max="350"/>
+      </div>
+      <div class="form-group">
+        <label for="edit-level">难度水平</label>
+        <select id="edit-level">
+          <!-- 常见攀岩等级选项 -->
+          <option value="5.3">5.3</option>
+          <option value="5.4">5.4</option>
+          <option value="5.5">5.5</option>
+          <option value="5.6">5.6</option>
+          <option value="5.7">5.7</option>
+          <option value="5.8">5.8</option>
+          <option value="5.9">5.9</option>
+          <option value="5.10a">5.10a</option>
+          <option value="5.10b">5.10b</option>
+          <option value="5.10c">5.10c</option>
+          <option value="5.10d">5.10d</option>
+          <option value="5.11a">5.11a</option>
+          <option value="5.11b">5.11b</option>
+          <option value="5.11c">5.11c</option>
+          <option value="5.11d">5.11d</option>
+          <option value="5.12a">5.12a</option>
+          <option value="5.12b">5.12b</option>
+          <option value="5.12c">5.12c</option>
+          <option value="5.12d">5.12d</option>
+          <option value="5.13a">5.13a</option>
+          <option value="5.13b">5.13b</option>
+          <option value="5.13c">5.13c</option>
+          <option value="5.13d">5.13d</option>
+          <option value="5.14a">5.14a</option>
+          <option value="5.14b">5.14b</option>
+          <option value="5.14c">5.14c</option>
+          <option value="5.14d">5.14d</option>
+          <option value="v1">v1</option>
+          <option value="v2">v2</option>
+          <option value="v3">v3</option>
+          <option value="v4">v4</option>
+          <option value="v5">v5</option>
+          <option value="v6">v6</option>
+          <option value="v7">v7</option>
+          <option value="v8">v8</option>
+          <option value="v9">v9</option>
+          <option value="v10">v10</option>
+          <option value="v11">v11</option>
+          <option value="v12">v12</option>
+          <option value="v13">v13</option>
+          <option value="v14">v14</option>
+          <option value="v15">v15</option>
+          <option value="v16">v16</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-time">攀岩时长 (月份)</label>
+        <select id="edit-time">
+          <!-- 0~1200个月(100年) -->
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-prefer">攀岩偏好</label>
+        <select id="edit-prefer" multiple>
+          <option value="绳索攀岩">绳索攀岩</option>
+          <option value="抱石">抱石</option>
+          <option value="速攀">速攀</option>
+        </select>
+        <p class="error-message" id="error-prefer"></p>
+      </div>
+      <button class="btn-modal btn-save" onclick="saveProfile()">保存</button>
+      <button class="btn-modal btn-cancel" onclick="closeEditProfile()">取消</button>
+    </div>
+  </div>
+
+  <!-- ============== 好友资料弹窗 ============== -->
+  <div class="modal-overlay" id="friend-info-overlay">
+    <div id="friend-info-content">
+      <img src="img/default_avatar.png" class="friend-info-avatar" id="friend-info-avatar" alt="FriendAvatar">
+      <h4 id="friend-info-username">好友用户名</h4>
+      <p id="friend-info-gender"></p>
+      <p id="friend-info-height"></p>
+      <p id="friend-info-wingspan"></p>
+      <p id="friend-info-level"></p>
+      <p id="friend-info-time"></p>
+      <p id="friend-info-prefer"></p>
+      <p id="friend-info-days"></p>
+      <p id="friend-info-beta"></p>
+      <button class="btn-close" onclick="closeFriendInfo()">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    // ========== 模拟的用户数据/好友资料 - 在真实环境中应从后端获取 ==========
+    const existingUsernames = ["用户名", "用户1", "用户2", "用户3", "用户4"]; 
+    const friendDetails = {
+      "用户1": {
+        avatar: "img/avatar1.png",
+        gender: "女",
+        height: 165,
+        wingspan: 163,
+        level: "5.9",
+        time: "1年2个月",
+        prefer: "绳索攀岩",
+        days: 90,
+        beta: 3
+      },
+      "用户2": {
+        avatar: "img/avatar2.png",
+        gender: "男",
+        height: 180,
+        wingspan: 185,
+        level: "5.10a",
+        time: "8个月",
+        prefer: "抱石",
+        days: 45,
+        beta: 2
+      },
+      "用户3": {
+        avatar: "img/avatar2.png",
+        gender: "不想透露",
+        height: 170,
+        wingspan: 170,
+        level: "5.11b",
+        time: "2年",
+        prefer: "抱石，速攀",
+        days: 200,
+        beta: 8
+      },
+      "用户4": {
+        avatar: "img/avatar1.png",
+        gender: "女",
+        height: 158,
+        wingspan: 160,
+        level: "v3",
+        time: "1年10个月",
+        prefer: "绳索攀岩，抱石",
+        days: 300,
+        beta: 12
+      }
+    };
+
+    // ========== 岩馆数据 ==========
+    const allCities = ["北京市", "上海市", "长沙市", "广州市"];
+    let selectedCity = allCities[0]; 
+    let gyms = [
+      {
+        id: 1,
+        name: "北京AA岩馆",
+        city: "北京市",
+        location: "北京市朝阳区XXX路",
+        likeCount: 10,
+        routes: [
+          {
+            routeName: "蓝色线路",
+            difficulty: "5.10b",
+            comment: "这条线路很有趣，需要大胆跨步。",
+            video: "http://example.com/video1.mp4"
+          }
+        ]
+      },
+      {
+        id: 2,
+        name: "上海XX岩馆",
+        city: "上海市",
+        location: "上海市浦东新区YYY路",
+        likeCount: 5,
+        routes: [
+          {
+            routeName: "红色抱石",
+            difficulty: "v3",
+            comment: "过顶区有点难，注意核心控制。",
+            video: ""
+          }
+        ]
+      },
+      {
+        id: 3,
+        name: "长沙天花板岩馆",
+        city: "长沙市",
+        location: "湖南省长沙市zzz路",
+        likeCount: 0,
+        routes: []
+      },
+      {
+        id: 4,
+        name: "广州超级岩馆",
+        city: "广州市",
+        location: "广东省广州市abc路",
+        likeCount: 2,
+        routes: []
+      }
+    ];
+
+    // ========== 野攀社区帖子列表 + 学习交流帖子列表 (仅前端模拟) ==========
+    let communityPosts = [
+      // 示例：一个初始帖
+      {
+        id: 1001,
+        title: "野攀路线推荐",
+        content: "分享一个最近新开的路线，感觉很棒！",
+        user: "用户1",    // 谁发的
+        likeCount: 2,    // 点赞数
+        comments: [      // 评论列表
+          { user: "用户2", text: "确实不错，我去爬过了！" }
+        ]
+      }
+    ];
+
+    let studyPosts = [
+      {
+        id: 2001,
+        title: "训练计划分享",
+        content: "最近摸索了一套训练方法，核心和拉力提升明显。",
+        user: "用户2",
+        likeCount: 3,
+        comments: [
+          { user: "用户3", text: "求分享具体动作！" },
+          { user: "用户1", text: "同求~" }
+        ]
+      }
+    ];
+
+
+    // ========== DOM加载完后的初始化 ==========
+    window.addEventListener('DOMContentLoaded', () => {
+      // 1) 填充城市下拉选项
+      const citySelect = document.getElementById('city-select');
+      if(citySelect){
+        allCities.forEach(city => {
+          const opt = document.createElement('option');
+          opt.value = city;
+          opt.textContent = city;
+          citySelect.appendChild(opt);
+        });
+        citySelect.value = selectedCity;
+        citySelect.addEventListener('change', () => {
+          selectedCity = citySelect.value;
+          renderGymList();
+        });
+      }
+  
+      // 2) 渲染岩馆列表
+      renderGymList();
+  
+      // 3) 读取 localStorage 的值并切换 Tab
+      const activeTab = localStorage.getItem('activeTab');
+      if (activeTab && activeTab !== 'tab-personal') {
+        // 去掉“个人中心”Tab的 active 状态
+        document.querySelector('.tab-item[data-target="tab-personal"]').classList.remove('active');
+        document.getElementById('tab-personal').classList.remove('active');
+
+        // 给对应的 tab-item 和 tab-content 加上 active
+        document.querySelector(`.tab-item[data-target="${activeTab}"]`).classList.add('active');
+        document.getElementById(activeTab).classList.add('active');
+
+        // 用完后删除，避免下一次依然默认为这个标签
+        localStorage.removeItem('activeTab');
+      }
+
+      // 4) 初始化“edit-time”下拉：0~1200
+      const editTimeSelect = document.getElementById('edit-time');
+      for(let i=0; i<=1200; i++){ 
+        const opt = document.createElement('option');
+        opt.value = i.toString();
+        opt.text = i + "个月";
+        editTimeSelect.appendChild(opt);
+      }
+    });
+
+
+
+    // ========== 底部导航切换 ==========
+    const tabBar = document.getElementById('tab-bar');
+    const tabs = document.querySelectorAll('.tab-content');
+    const tabItems = document.querySelectorAll('.tab-item');
+
+    tabBar.addEventListener('click', (e) => {
+      const target = e.target.closest('.tab-item');
+      if(!target) return;
+      tabItems.forEach(item => item.classList.remove('active'));
+      tabs.forEach(tab => tab.classList.remove('active'));
+
+      target.classList.add('active');
+      const tabId = target.dataset.target;
+      document.getElementById(tabId).classList.add('active');
+
+      if(tabId === "tab-share") {
+        renderGymList();
+      }
+
+      // 如果当前点击的是 tab-community
+      if(tabId === "tab-community"){
+        renderCommunityPosts();
+      }
+
+      // 如果当前点击的是 tab-study
+      if(tabId === "tab-study"){
+        renderStudyPosts();
+      }
+    });
+
+    // ========== 好友逻辑 ==========
+    function deleteFriend(event, username) {
+      event.stopPropagation(); 
+      if (confirm(`确定删除好友 ${username} 吗？`)) {
+        alert(`已删除好友 ${username}`);
+        const friendListEl = document.getElementById('friend-list');
+        const liNodes = friendListEl.querySelectorAll('li.friend-item');
+        liNodes.forEach(li => {
+          if(li.innerText.includes(username)){
+            friendListEl.removeChild(li);
+          }
+        });
+      }
+    }
+
+    function requestAddFriend() {
+      const input = document.getElementById('search-friend-input');
+      const username = input.value.trim();
+      if(!username) {
+        alert("请输入用户名");
+        return;
+      }
+      if(!existingUsernames.includes(username) || username==="用户名") {
+        alert("未找到该用户，或不能添加自己为好友");
+        return;
+      }
+      // 是否已在好友列表
+      const friendListEl = document.getElementById('friend-list');
+      const friendItems = friendListEl.querySelectorAll('li.friend-item');
+      for(let i=0; i<friendItems.length; i++){
+        if(friendItems[i].innerText.includes(username)) {
+          alert("对方已是您的好友");
+          return;
+        }
+      }
+
+      alert(`已向 ${username} 发送好友申请(模拟)，若对方同意则成为好友。`);
+      setTimeout(()=>{
+        addFriendToList(username);
+        alert(`${username} 已同意你的好友申请！`);
+      }, 1500);
+
+      input.value = "";
+    }
+
+    function addFriendToList(username){
+      const friendListEl = document.getElementById('friend-list');
+      const li = document.createElement('li');
+      li.className = 'friend-item';
+      li.setAttribute('onclick', `openFriendInfo(event, '${username}')`);
+
+      const leftDiv = document.createElement('div');
+      leftDiv.style.display = "flex";
+      leftDiv.style.alignItems = "center";
+
+      const img = document.createElement('img');
+      img.src = friendDetails[username]?.avatar || 'img/default_avatar.png';
+      img.alt = "";
+      leftDiv.appendChild(img);
+
+      const span = document.createElement('span');
+      span.textContent = username;
+      leftDiv.appendChild(span);
+
+      const rightDiv = document.createElement('div');
+
+      const btnChat = document.createElement('button');
+      btnChat.textContent = "聊天";
+      btnChat.setAttribute('onclick', `enterChat(event, '${username}')`);
+
+      const btnDelete = document.createElement('button');
+      btnDelete.textContent = "删除";
+      btnDelete.setAttribute('onclick', `deleteFriend(event, '${username}')`);
+
+      rightDiv.appendChild(btnChat);
+      rightDiv.appendChild(btnDelete);
+
+      li.appendChild(leftDiv);
+      li.appendChild(rightDiv);
+      friendListEl.appendChild(li);
+    }
+
+    function openFriendInfo(event, username){
+      event.stopPropagation(); 
+      const overlay = document.getElementById('friend-info-overlay');
+      const friendData = friendDetails[username];
+
+      document.getElementById('friend-info-avatar').src = friendData?.avatar || 'img/default_avatar.png';
+      document.getElementById('friend-info-username').textContent = username;
+      document.getElementById('friend-info-gender').textContent   = "性别: " + (friendData?.gender ?? "无");
+      document.getElementById('friend-info-height').textContent   = "身高(cm): " + (friendData?.height ?? 0);
+      document.getElementById('friend-info-wingspan').textContent = "臂展(cm): " + (friendData?.wingspan ?? 0);
+      document.getElementById('friend-info-level').textContent    = "难度水平: " + (friendData?.level ?? "5.6");
+      document.getElementById('friend-info-time').textContent     = "攀岩时长: " + (friendData?.time ?? "未知");
+      document.getElementById('friend-info-prefer').textContent   = "攀岩偏好: " + (friendData?.prefer ?? "无");
+      document.getElementById('friend-info-days').textContent     = "注册天数: " + (friendData?.days ?? 0);
+      document.getElementById('friend-info-beta').textContent     = "分享Beta: " + (friendData?.beta ?? 0);
+
+      overlay.style.display = "flex";
+    }
+    function closeFriendInfo(){
+      document.getElementById('friend-info-overlay').style.display = "none";
+    }
+
+    // ========== 聊天 ==========
+    let currentChatUser = '';
+
+    function enterChat(event, username) {
+      event.stopPropagation();
+      currentChatUser = username;
+      document.getElementById('chat-title').textContent = `与 ${username} 的聊天`;
+      const chatMessagesEl = document.getElementById('chat-messages');
+      chatMessagesEl.innerHTML = '';
+      const friendMsg = createBubble(`你好，我是 ${username}！`, 'friend');
+      chatMessagesEl.appendChild(friendMsg);
+
+      document.getElementById('friend-list-container').style.display = 'none';
+      document.getElementById('chat-container').style.display = 'block';
+    }
+
+    function returnToFriendList() {
+      document.getElementById('chat-container').style.display = 'none';
+      document.getElementById('friend-list-container').style.display = 'block';
+    }
+
+    function createBubble(text, type) {
+      const bubble = document.createElement('div');
+      bubble.classList.add('chat-bubble', type);
+      bubble.innerHTML = text;
+      return bubble;
+    }
+
+    function sendMessage() {
+      const chatInputEl = document.getElementById('chat-input');
+      const chatMessagesEl = document.getElementById('chat-messages');
+      const message = chatInputEl.value.trim();
+      if (message) {
+        const myMsg = createBubble(message, 'me');
+        chatMessagesEl.appendChild(myMsg);
+        chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        chatInputEl.value = '';
+
+        setTimeout(() => {
+          const reply = createBubble(`这是来自 ${currentChatUser} 的回复`, 'friend');
+          chatMessagesEl.appendChild(reply);
+          chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }, 600);
+      }
+    }
+
+    // ========== 线路分享+野攀社区+学习分享列表渲染 + 搜索 + 点赞 ==========
+    const shareListEl = document.getElementById('share-list');
+    const searchInput = document.getElementById('search-input');
+
+    function renderGymList() {
+      if(!shareListEl) return;
+      shareListEl.innerHTML = "";
+      const query = (searchInput?.value || "").toLowerCase();
+
+      gyms.forEach(gym => {
+        if (gym.city !== selectedCity) return;
+        if (!gym.name.toLowerCase().includes(query)) return;
+
+        const postDiv = document.createElement('div');
+        postDiv.className = "post";
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = "post-header";
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = "post-title";
+        titleSpan.textContent = gym.name;
+        // 改为直接跳转新页面
+        titleSpan.onclick = () => {
+          // 1. 设置 localStorage，告诉主页面“我要回到 tab-share”
+          localStorage.setItem('activeTab', 'tab-share');
+
+          // 2. 然后再正常跳转新页面
+          window.location.href = 'gymdetail.html';
+        };
+
+        const dateSpan = document.createElement('span');
+        dateSpan.className = "post-date";
+        dateSpan.textContent = "已有线路: " + gym.routes.length;
+
+        headerDiv.appendChild(titleSpan);
+        headerDiv.appendChild(dateSpan);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = "post-content";
+        contentDiv.textContent = gym.location;
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = "post-actions";
+
+        const btnLike = document.createElement('button');
+        btnLike.className = "btn-like";
+        btnLike.textContent = "👍";
+        btnLike.onclick = () => {
+          gym.likeCount++;
+          renderGymList(); // 重新渲染刷新点赞数
+        };
+
+        const likeCountSpan = document.createElement('span');
+        likeCountSpan.className = "like-count";
+        likeCountSpan.textContent = ` ${gym.likeCount} 个赞`;
+
+        actionsDiv.appendChild(btnLike);
+        actionsDiv.appendChild(likeCountSpan);
+
+        postDiv.appendChild(headerDiv);
+        postDiv.appendChild(contentDiv);
+        postDiv.appendChild(actionsDiv);
+
+        shareListEl.appendChild(postDiv);
+      });
+    }
+
+    function renderCommunityPosts() {
+      const listEl = document.getElementById('community-post-list');
+      listEl.innerHTML = '';
+
+      const keyword = (document.getElementById('search-input-community').value || '').toLowerCase();
+      communityPosts.forEach(post => {
+        if (
+          post.title.toLowerCase().includes(keyword) ||
+          post.content.toLowerCase().includes(keyword) ||
+          post.user.toLowerCase().includes(keyword)
+        ) {
+          const postDiv = createPostDiv(post, 'community');
+          listEl.appendChild(postDiv);
+        }
+        localStorage.setItem('communityPosts', JSON.stringify(communityPosts));
+      });
+    }
+
+
+    function renderStudyPosts() {
+      const listEl = document.getElementById('study-post-list');
+      listEl.innerHTML = '';
+
+      const keyword = (document.getElementById('search-input-study').value || '').toLowerCase();
+
+      studyPosts.forEach(post => {
+        if(
+          post.title.toLowerCase().includes(keyword)
+          || post.content.toLowerCase().includes(keyword)
+          || post.user.toLowerCase().includes(keyword)
+        ) {
+      
+          const postDiv = createPostDiv(post, 'study');
+          listEl.appendChild(postDiv);
+        }
+        localStorage.setItem('studyPosts', JSON.stringify(studyPosts));
+      });
+    }
+
+    function goToCommunityPostPage() {
+      window.location.href = "community_create.html";
+    }
+
+    function goToStudyPostPage() {
+      window.location.href = "study_create.html";
+    }
+
+    function createPostDiv(post, tabType){
+      // 最外层容器
+      const wrapper = document.createElement('div');
+      wrapper.className = 'post';
+      // 让“点击整个帖子”就能跳转到详情页
+      wrapper.onclick = () => {
+        // 比如跳到 "community_detail.html?id=xxxx"
+        if(tabType === 'community') {
+          window.location.href = `community_detail.html?postId=${post.id}`;
+        } else if (tabType === 'study') {
+          window.location.href = `study_detail.html?postId=${post.id}`;
+        }
+      };
+  
+      // 帖子头部(标题 + 作者)
+      const header = document.createElement('div');
+      header.className = 'post-header';
+
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'post-title';
+      titleSpan.textContent = post.title + " (作者: " + post.user + ")";
+      header.appendChild(titleSpan);
+
+      // 帖子右侧展示评论数和点赞数
+      const infoSpan = document.createElement('span');
+      infoSpan.className = 'post-date';
+      infoSpan.textContent = `评论: ${post.comments.length} | 点赞: ${post.likeCount}`;
+      header.appendChild(infoSpan);
+
+      wrapper.appendChild(header);
+
+      // 帖子内容
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'post-content';
+      contentDiv.textContent = post.content.substring(0, 50) + '...';
+      wrapper.appendChild(contentDiv);
+
+      return wrapper;
+    }
+
+    function likePost(postId, tabType){
+      let arr = (tabType === 'community') ? communityPosts : studyPosts;
+      const post = arr.find(p => p.id === postId);
+      if(!post) return;
+      post.likeCount++;
+      if(tabType === 'community'){
+        renderCommunityPosts();
+      } else {
+        renderStudyPosts();
+        }
+    }
+
+    function deletePost(postId, tabType){
+      let arr = (tabType === 'community') ? communityPosts : studyPosts;
+      const idx = arr.findIndex(p => p.id === postId);
+      if(idx === -1) return;
+      if(!confirm("确定删除该帖子吗？")) return;
+      arr.splice(idx, 1);
+      if(tabType === 'community'){
+        renderCommunityPosts();
+      } else {
+        renderStudyPosts();
+      }
+      alert("帖子已删除！");
+    }
+
+    function toggleCommentSection(postId, tabType, wrapper){
+      // 检测一下页面里是否已有评论区div
+      let cSection = wrapper.querySelector('.comment-section');
+      if(cSection){
+        // 如果已经展开，就把它移除(收起)
+        wrapper.removeChild(cSection);
+        return;
+      }
+  
+      // 否则创建一个
+      cSection = document.createElement('div');
+      cSection.className = 'comment-section';
+      cSection.style.borderTop = "1px solid #ddd";
+      cSection.style.marginTop = "8px";
+      cSection.style.paddingTop = "8px";
+  
+      // 找到帖子
+      let arr = (tabType === 'community') ? communityPosts : studyPosts;
+      const post = arr.find(p => p.id === postId);
+      if(!post) return;
+  
+      // 1) 评论列表
+      const listDiv = document.createElement('div');
+      post.comments.forEach(cmt => {
+        const p = document.createElement('p');
+        p.style.marginBottom = "5px";
+        p.textContent = cmt.user + ": " + cmt.text;
+        listDiv.appendChild(p);
+      });
+      cSection.appendChild(listDiv);
+  
+      // 2) 添加评论输入框
+      const inp = document.createElement('input');
+      inp.type = "text";
+      inp.placeholder = "写评论...";
+      inp.style.width = "70%";
+      inp.style.marginRight = "5px";
+  
+      const btn = document.createElement('button');
+      btn.textContent = "提交";
+      btn.onclick = () => {
+        const txt = inp.value.trim();
+        if(!txt){
+          alert("请输入评论内容");
+          return;
+        }
+        // 假设当前用户是“用户1”
+        post.comments.push({ user: "用户1", text: txt });
+        inp.value = "";
+        // 重新渲染一下评论列表
+        cSection.remove();
+        toggleCommentSection(postId, tabType, wrapper);
+      };
+  
+      cSection.appendChild(inp);
+      cSection.appendChild(btn);
+  
+      // 插到 wrapper 末尾
+      wrapper.appendChild(cSection);
+    }
+
+
+
+    // ========== 编辑资料弹窗 ==========
+    const overlay = document.getElementById('edit-profile-overlay');
+
+    function openEditProfile() {
+      document.getElementById('edit-username').value 
+        = document.getElementById('profile-username').textContent;
+      document.getElementById('edit-gender').value 
+        = document.getElementById('profile-gender').textContent.replace("性别: ","");
+      document.getElementById('edit-height').value 
+        = document.getElementById('profile-height').textContent.replace("身高(cm): ","");
+      document.getElementById('edit-wingspan').value 
+        = document.getElementById('profile-wingspan').textContent.replace("臂展(cm): ","");
+      document.getElementById('edit-level').value 
+        = document.getElementById('profile-level').textContent.replace("难度水平: ","");
+
+      const timeText = document.getElementById('profile-time').textContent.replace("攀岩时长: ","");
+      const months = convertTimeToMonths(timeText);
+      document.getElementById('edit-time').value = months.toString();
+
+      const preferText = document.getElementById('profile-prefer').textContent.replace("攀岩偏好: ","");
+      const arrPrefer = preferText.split("，");
+      const editPrefer = document.getElementById('edit-prefer');
+      for(let i=0; i<editPrefer.options.length; i++){
+        editPrefer.options[i].selected = false;
+      }
+      for(let i=0; i<editPrefer.options.length; i++){
+        if(arrPrefer.includes(editPrefer.options[i].value)){
+          editPrefer.options[i].selected = true;
+        }
+      }
+
+      overlay.style.display = "flex";
+    }
+
+    function closeEditProfile() {
+      overlay.style.display = "none";
+      document.getElementById('error-username').textContent = '';
+      document.getElementById('error-prefer').textContent = '';
+    }
+
+    function convertTimeToMonths(str){
+      if(str.includes("个月")){
+        return parseInt(str) || 0;
+      }
+      if(str.includes("半年")){
+        return 6; 
+      }
+      return 0;
+    }
+
+    function saveProfile() {
+      const newUsername = document.getElementById('edit-username').value.trim();
+      const newGender   = document.getElementById('edit-gender').value;
+      const newHeight   = document.getElementById('edit-height').value;
+      const newWingspan = document.getElementById('edit-wingspan').value;
+      const newLevel    = document.getElementById('edit-level').value;
+      const newTime     = document.getElementById('edit-time').value;
+      const preferSelect = document.getElementById('edit-prefer');
+
+      let newPrefers = [];
+      for(let i=0; i<preferSelect.options.length; i++){
+        if(preferSelect.options[i].selected){
+          newPrefers.push(preferSelect.options[i].value);
+        }
+      }
+
+      const oldUsername = document.getElementById('profile-username').textContent;
+      const conflict = existingUsernames.some(u => u===newUsername && newUsername!==oldUsername);
+
+      if(conflict){
+        document.getElementById('error-username').textContent = '该用户名已存在，请换一个。';
+        return;
+      } else {
+        document.getElementById('error-username').textContent = '';
+      }
+
+      if(newPrefers.length===0){
+        document.getElementById('error-prefer').textContent = '请选择至少一种攀岩偏好';
+        return;
+      } else {
+        document.getElementById('error-prefer').textContent = '';
+      }
+
+      // 更新展示
+      document.getElementById('profile-username').textContent = newUsername || "未设置";
+      document.getElementById('profile-gender').textContent   = "性别: " + (newGender||"不想透露");
+      document.getElementById('profile-height').textContent   = "身高(cm): " + (newHeight || "0");
+      document.getElementById('profile-wingspan').textContent = "臂展(cm): " + (newWingspan || "0");
+      document.getElementById('profile-level').textContent    = "难度水平: " + (newLevel||"5.6");
+
+      const monthNum = parseInt(newTime);
+      const y = Math.floor(monthNum/12);
+      const m = monthNum % 12;
+      let timeDesc = "";
+      if(y>0) timeDesc += y+"年";
+      if(m>0) timeDesc += m+"个月";
+      if(timeDesc==="") timeDesc="0个月"; 
+      document.getElementById('profile-time').textContent = "攀岩时长: " + timeDesc;
+
+      document.getElementById('profile-prefer').textContent = "攀岩偏好: " + newPrefers.join("，");
+
+      const avatarFile = document.getElementById('edit-avatar').files[0];
+      if(avatarFile){
+        console.log("选择的头像文件是：", avatarFile.name);
+        // 可用 FileReader 预览
+      }
+
+      if(!existingUsernames.includes(newUsername)){
+        existingUsernames.push(newUsername);
+      }
+      closeEditProfile();
+      alert("资料已更新！");
+    }
+    
+    function logout() {
+      // 清理本地数据
+      // localStorage.removeItem('token'); // 如果有token
+      // localStorage.removeItem('username'); // 如果存了用户名
+      // ... 其他需要清理的内容
+  
+      alert("已退出登录");
+      // 跳转到登录页
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

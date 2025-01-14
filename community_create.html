@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>发帖 - 野攀社区</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .header {
+      background-color: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    .main {
+      flex: 1; 
+      overflow-y: auto; 
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical; /* 可以上下拉伸 */
+    }
+    .btn-row {
+      margin-top: 20px;
+      display: flex;
+      gap: 10px; 
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-submit {
+      background-color: #5690d8;
+      color: #fff;
+    }
+    .btn-submit:hover {
+      background-color: #4577b5;
+    }
+    .btn-cancel {
+      background-color: #ccc;
+      color: #333;
+    }
+    .btn-cancel:hover {
+      background-color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">发帖 - 野攀社区</div>
+
+  <div class="main">
+    <div class="form-group">
+      <label for="post-title">标题</label>
+      <input type="text" id="post-title" placeholder="请输入帖子标题" />
+    </div>
+    
+    <div class="form-group">
+      <label for="post-content">内容</label>
+      <textarea id="post-content" rows="5" placeholder="说点什么..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="post-video">上传视频</label>
+      <input type="file" id="post-video" accept="video/*" />
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-submit" onclick="submitPost()">发布</button>
+      <button class="btn-cancel" onclick="cancelPost()">取消</button>
+    </div>
+  </div>
+
+  <script>
+    // 假设之前页面是"野攀社区" => "tab-community"
+    // 也可能从"学习交流" => "tab-study"过来。
+    // 这里用 URL 参数或者 localStorage 来记住从哪里来。
+    // 例如在进入本页面前，可以 localStorage.setItem('fromTab', 'tab-community')。
+    // 下面这里就去读取这个值，决定“返回”跳哪。
+    const fromTab = localStorage.getItem('fromTab') || 'tab-community'; 
+    // 也可以再获取“上一个页面”URL，但这里先简单做。
+
+    function submitPost(){
+        const title = document.getElementById('post-title').value.trim();
+      const content = document.getElementById('post-content').value.trim();
+
+      if(!title){
+        alert("请填写帖子标题");
+        return;
+      }
+
+      // 拿到文件对象
+      const videoFile = document.getElementById('post-video').files[0];
+      // 如果要上传到服务器，这里可以把 videoFile 通过 FormData 传给后端
+
+      // 生成发帖时间
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth()+1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hour = String(now.getHours()).padStart(2, '0');
+      const minute = String(now.getMinutes()).padStart(2, '0');
+      const createTime = `${year}-${month}-${day} ${hour}:${minute}`;
+
+      // 下面是前端模拟，把帖子存在 localStorage 或全局数组
+      // 在真实项目里，此处应发送ajax请求给服务器，把帖子的 title、content、video 等保存。
+      // 发帖成功后再返回列表页面即可。
+
+      // 本地模拟保存 => 例如把新帖子 push 到 communityPosts
+      let communityPosts = JSON.parse(localStorage.getItem('communityPosts')) || [];
+      const newPost = {
+        id: Date.now(),
+        title,
+        content,
+        videoUrl: videoFile ? videoFile.name : "", // 仅存文件名做演示
+        user: "当前用户",
+        likeCount: 0,
+        comments: [],
+        createTime
+      };
+      communityPosts.unshift(newPost);
+      localStorage.setItem('communityPosts', JSON.stringify(communityPosts));
+
+      alert("发帖成功！");
+      window.history.back(); 
+    }
+
+    function cancelPost(){
+      // 也可以直接返回上一页
+      window.history.back(); 
+
+    }
+  </script>
+</body>
+</html>

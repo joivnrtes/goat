@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- 针对iPhone的初始视口配置，禁止用户缩放以获得类似原生App的体验 -->
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>北京AA岩馆 - 详情</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      box-sizing: border-box;
+    }
+    .header {
+      background-color: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      position: relative; /* 如果想在左侧放返回按钮，可相对定位 */
+    }
+    /* “返回主界面”按钮 */
+    .back-btn {
+      position: absolute; 
+      left: 10px; 
+      top: 50%;
+      transform: translateY(-50%); /* 垂直居中对齐 */
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .back-btn:hover {
+      color: #ddd;
+    }
+
+    .container {
+      padding: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      min-height: calc(100vh - 20px);
+    }
+    .gym-info {
+      margin-bottom: 12px;
+    }
+    .gym-info h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #333;
+    }
+    .gym-basic {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .btn-add-route {
+      display: inline-block;
+      padding: 8px 12px;
+      background: #f04e30;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    .btn-add-route:hover {
+      background: #d13e27;
+    }
+
+    /* 线路列表样式 */
+    .route-list {
+      list-style: none;
+      margin: 0; padding: 0;
+    }
+    .route-item {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+    .route-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .route-title {
+      font-size: 15px;
+      font-weight: bold;
+      color: #333;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .route-title:hover {
+      color: #f04e30;
+    }
+    .route-creator {
+      font-size: 13px;
+      color: #999;
+    }
+    .route-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-like, .btn-comment {
+      background: transparent;
+      border: none;
+      color: #f04e30;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-like:hover, .btn-comment:hover {
+      color: #d13e27;
+    }
+    .like-count, .comment-count {
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <!-- 在header中添加“返回主界面”按钮(链接)，带 ?tab=share 参数 -->
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">← 返回</button>
+    北京AA岩馆</div>
+
+  <div class="container">
+    <!-- 岩馆基本信息 -->
+    <div class="gym-info">
+      <h2>北京AA岩馆</h2>
+      <p class="gym-basic">地址：北京市朝阳区XXX路99号楼</p>
+      <p class="gym-basic">开放时间：周一至周日 10:00-22:00</p>
+      <p class="gym-basic">人均消费：约100元</p>
+      <p class="gym-basic">联系电话：010-12345678</p>
+    </div>
+
+    <!-- 跳转到添加线路的页面 -->
+    <a href="addnew.html" class="btn-add-route">➕ 添加新线路</a>
+
+    <!-- 线路列表 -->
+    <ul class="route-list" id="route-list"></ul>
+  </div>
+
+  <script>
+    function goBack() {
+      window.location.href = 'index.html';
+    }
+    let routes = [
+      { 
+        id: 101, 
+        name: "蓝色5.10a", 
+        difficulty: "5.10a", 
+        likeCount: 3, 
+        commentCount: 2,
+        creator: "用户Alice"
+      },
+      { 
+        id: 102, 
+        name: "红色5.10c", 
+        difficulty: "5.10c", 
+        likeCount: 5, 
+        commentCount: 4,
+        creator: "用户Bob"
+      },
+      { 
+        id: 103, 
+        name: "黄色v3", 
+        difficulty: "v3", 
+        likeCount: 2, 
+        commentCount: 1,
+        creator: "用户Charlie"
+      }
+    ];
+
+    function renderRouteList(){
+      const listEl = document.getElementById('route-list');
+      listEl.innerHTML = "";
+
+      routes.forEach(route => {
+        const li = document.createElement('li');
+        li.className = "route-item";
+
+        // 顶部：标题 & 创建者
+        const headerDiv = document.createElement('div');
+        headerDiv.className = "route-header";
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = "route-title";
+        titleSpan.textContent = route.name;
+        titleSpan.onclick = () => {
+          window.location.href = `routeDetail.html?id=${route.id}`;
+        };
+
+        const creatorSpan = document.createElement('span');
+        creatorSpan.className = "route-creator";
+        creatorSpan.textContent = route.creator;
+
+        headerDiv.appendChild(titleSpan);
+        headerDiv.appendChild(creatorSpan);
+
+        // 中间：难度
+        const diffP = document.createElement('p');
+        diffP.style.fontSize = "14px";
+        diffP.style.color = "#666";
+        diffP.textContent = `难度：${route.difficulty}`;
+
+        // 底部：点赞、评论
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = "route-actions";
+
+        const btnLike = document.createElement('button');
+        btnLike.className = "btn-like";
+        btnLike.textContent = "👍";
+        btnLike.onclick = () => {
+          route.likeCount++;
+          renderRouteList();
+        };
+
+        const likeSpan = document.createElement('span');
+        likeSpan.className = "like-count";
+        likeSpan.textContent = `${route.likeCount}赞`;
+
+        const btnComment = document.createElement('button');
+        btnComment.className = "btn-comment";
+        btnComment.textContent = "💬";
+        btnComment.onclick = () => {
+          alert("请点击线路标题查看详情并评论~(示例)");
+        };
+
+        const cmtSpan = document.createElement('span');
+        cmtSpan.className = "comment-count";
+        cmtSpan.textContent = `${route.commentCount}评`;
+
+        actionsDiv.appendChild(btnLike);
+        actionsDiv.appendChild(likeSpan);
+        actionsDiv.appendChild(btnComment);
+        actionsDiv.appendChild(cmtSpan);
+
+        li.appendChild(headerDiv);
+        li.appendChild(diffP);
+        li.appendChild(actionsDiv);
+
+        listEl.appendChild(li);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', renderRouteList);
+  </script>
+</body>
+</html>

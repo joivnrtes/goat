@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- 针对iPhone的初始视口配置，禁止用户缩放以获得类似原生App的体验 -->
+  <meta
+    name="viewport"
+    content="width=device-width, maximum-scale=1.0, user-scalable=no"
+  />
+  <title>线路详情</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+        "Segoe UI", Roboto, sans-serif;
+      background: #f8f8f8;
+      color: #333;
+      box-sizing: border-box;
+    }
+    .header {
+      background: rgba(130, 165, 223, 0.85);
+      color: #fff;
+      padding: 12px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;      /* 新增: 让它能横向排 */
+      align-items: center; /* 垂直居中 */
+    }
+    .btn-back {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .btn-back:hover {
+      color: #eee;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 10px;
+      min-height: calc(100vh - 20px);
+    }
+    .route-info h2 {
+      margin: 0;
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+    .route-meta {
+      font-size: 13px;
+      color: #999;
+      margin-bottom: 8px;
+    }
+    .route-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .btn-like-route {
+      background: transparent;
+      border: none;
+      color: #f04e30;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .btn-like-route:hover {
+      color: #d13e27;
+    }
+    .like-count {
+      font-size: 14px;
+      color: #555;
+    }
+    .route-comment {
+      margin: 6px 0;
+      font-size: 14px;
+      color: #555;
+      white-space: pre-wrap;
+    }
+    .route-video {
+      font-size: 14px;
+      color: #5690d8;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+    .route-video:hover {
+      color: #f04e30;
+    }
+
+    /* 评论区 */
+    .comment-section {
+      margin-top: 12px;
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+    }
+    .comment-section h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    .comment-item {
+      margin-bottom: 10px;
+      padding: 8px;
+      background: #fafafa;
+      border-radius: 4px;
+      border: 1px solid #eee;
+      position: relative;
+    }
+    .comment-item-text {
+      font-size: 14px;
+      color: #333;
+      white-space: pre-wrap;
+    }
+    .comment-item-video {
+      font-size: 13px;
+      color: #5690d8;
+      text-decoration: underline;
+      cursor: pointer;
+      display: block;
+      margin-top: 4px;
+    }
+    .comment-item-video:hover {
+      color: #f04e30;
+    }
+    .btn-delete-comment {
+      background: #aaa;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+    .btn-delete-comment:hover {
+      background: #888;
+    }
+
+    .comment-form {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .comment-form textarea,
+    .comment-form input {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 14px;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .btn-submit-comment {
+      background: #5690d8;
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-top: 4px;
+      width: 80px;
+      text-align: center;
+    }
+    .btn-submit-comment:hover {
+      background: #4577b5;
+    }
+  </style>
+</head>
+<body>
+  <!-- 头部：增加返回按钮 -->
+  <div class="header">
+    <button class="btn-back" onclick="goBackToGymDetail()">←</button>
+    线路详情
+  </div>
+
+  <div class="container">
+    <div class="route-info">
+      <h2 id="route-title">线路名称(动态)</h2>
+      <p class="route-meta" id="route-meta"></p>
+    </div>
+    <div class="route-actions">
+      <button class="btn-like-route" id="btn-like-route">👍</button>
+      <span class="like-count" id="route-like">0赞</span>
+    </div>
+
+    <div class="route-comment" id="route-comment"></div>
+    <a class="route-video" id="route-video" href="#" target="_blank"></a>
+
+    <!-- 评论区 -->
+    <div class="comment-section">
+      <h3>评论区</h3>
+      <div id="comment-list"></div>
+      <!-- 添加评论表单 -->
+      <div class="comment-form">
+        <textarea id="cmt-text" rows="3" placeholder="写点什么..."></textarea>
+        <input type="text" id="cmt-video" placeholder="视频Beta链接(可选)"/>
+        <button class="btn-submit-comment" onclick="addComment()">发布</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ========== 新增：返回到gymdetail.html ==========
+    function goBackToGymDetail() {
+      window.location.href = "gymdetail.html"; 
+      // 或者: history.back()
+    }
+
+    // 为简化演示，这里也本地存储线路信息
+    // 在真正环境下，你可在 beijingAA.html -> routeDetail.html 通过后端接口获取完整信息
+    // 这里用一个全局 routesDetail 来模拟
+    const routesDetail = {
+      101: {
+        id: 101,
+        name: "蓝色5.10a",
+        difficulty: "5.10a",
+        creator: "用户Alice",
+        likeCount: 3,
+        comment: "需要大跨步，注意核心发力。",
+        video: "http://example.com/video.mp4",
+        comments: [
+          { id: 5001, text: "我也爬了，好酸手！", video:"", user: "用户Bob" },
+          { id: 5002, text: "有个小Beta分享", video:"http://beta.com/betaA", user: "用户Chris" }
+        ]
+      },
+      102: {
+        id: 102,
+        name: "红色5.10c",
+        difficulty: "5.10c",
+        creator: "用户Bob",
+        likeCount: 5,
+        comment: "有个斜楔位需要用脚尖卡住。",
+        video: "",
+        comments: [
+          { id: 6001, text: "最后顶点很捏手", video:"", user: "用户Alice" },
+          { id: 6002, text: "我的Beta链接", video:"http://beta.com/betaB", user: "用户Chris" }
+        ]
+      },
+      103: {
+        id: 103,
+        name: "黄色v3",
+        difficulty: "v3",
+        creator: "用户Charlie",
+        likeCount: 2,
+        comment: "抱石线路，需要核心爆发。",
+        video: "",
+        comments: [
+          { id: 7001, text: "感觉比v3难啊", video:"", user: "用户Bob" }
+        ]
+      }
+    };
+
+    let currentRoute = null; // 保存当前线路详细信息
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // 解析URL里的 ?id=xxx
+      const params = new URLSearchParams(window.location.search);
+      const routeId = parseInt(params.get('id'),10);
+      currentRoute = routesDetail[routeId];
+
+      // 渲染线路信息
+      document.getElementById('route-title').textContent 
+        = `${currentRoute.name} - ${currentRoute.difficulty}`;
+      document.getElementById('route-meta').textContent 
+        = `创建者: ${currentRoute.creator}`;
+      document.getElementById('route-like').textContent 
+        = `${currentRoute.likeCount}赞`;
+      document.getElementById('route-comment').textContent 
+        = currentRoute.comment || "(暂无描述)";
+
+      const videoA = document.getElementById('route-video');
+      if(currentRoute.video){
+        videoA.textContent = "查看视频Beta";
+        videoA.href = currentRoute.video;
+      } else {
+        videoA.textContent = "";
+        videoA.removeAttribute('href');
+      }
+
+      // 点赞按钮
+      document.getElementById('btn-like-route').onclick = () => {
+        currentRoute.likeCount++;
+        document.getElementById('route-like').textContent 
+          = `${currentRoute.likeCount}赞`;
+      };
+
+      // 渲染评论列表
+      renderCommentList();
+    });
+
+    function renderCommentList(){
+      const listEl = document.getElementById('comment-list');
+      listEl.innerHTML = "";
+
+      currentRoute.comments.forEach(cmt => {
+        const cItem = document.createElement('div');
+        cItem.className = "comment-item";
+
+        const textDiv = document.createElement('div');
+        textDiv.className = "comment-item-text";
+        textDiv.textContent = `${cmt.user || "匿名"}: ${cmt.text || "(无文字)"}`;
+
+        cItem.appendChild(textDiv);
+
+        if(cmt.video){
+          const vidA = document.createElement('a');
+          vidA.className = "comment-item-video";
+          vidA.href = cmt.video;
+          vidA.target = "_blank";
+          vidA.textContent = "查看视频Beta";
+          cItem.appendChild(vidA);
+        }
+
+        const delBtn = document.createElement('button');
+        delBtn.className = "btn-delete-comment";
+        delBtn.textContent = "删";
+        delBtn.onclick = () => {
+          deleteComment(cmt.id);
+        };
+        cItem.appendChild(delBtn);
+
+        listEl.appendChild(cItem);
+      });
+    }
+
+    function addComment(){
+      const txt = document.getElementById('cmt-text').value.trim();
+      const vid = document.getElementById('cmt-video').value.trim();
+      if(!txt && !vid){
+        alert("请至少填写文字或视频链接");
+        return;
+      }
+      // 假设当前用户叫“用户You”
+      const newId = Date.now(); // 简易id
+      currentRoute.comments.push({
+        id: newId,
+        text: txt,
+        video: vid,
+        user: "用户You"
+      });
+      document.getElementById('cmt-text').value = "";
+      document.getElementById('cmt-video').value = "";
+      renderCommentList();
+    }
+
+    function deleteComment(commentId){
+      if(!confirm("确定删除该条评论吗？")) return;
+      currentRoute.comments = currentRoute.comments.filter(c => c.id !== commentId);
+      renderCommentList();
+    }
+  </script>
+</body>
+</html>
